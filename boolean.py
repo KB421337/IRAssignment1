@@ -72,6 +72,11 @@ def not_merge(post_list1,doc_ID):
     return result
 
 def retrieve_list(term,temp_results=None):
+    """
+    Retrieve posting list of given search term.
+    If not found minimum edit distance algorithm is applied and the 
+    top 3 nearest words are given as suggestions
+    """
     ans = []
     if term in index_dict.keys():
         ans = index_dict[term]
@@ -88,26 +93,30 @@ def retrieve_list(term,temp_results=None):
     return ans
 
 def suggestEdits(word):
+    """
+    Given an mispelled word, suggest the top 3 spelling corrections using minimum edit distance algorithm
+    """
     dists = []
-    for idx in tqdm(list(index_dict.keys())):
+    for idx in tqdm(list(index_dict.keys())): # Iterate through keys
         if idx[0]==word[0]:
-            dists.append(editDistance(idx, word, len(idx), len(word)))
+            dists.append(editDistance(idx, word, len(idx), len(word))) # Append edit distance 
         else:
             dists.append(np.inf)
     dists = np.array(dists)
-    min_idxs = np.argpartition(dists, 3)[:3]
+    min_idxs = np.argpartition(dists, 3)[:3] # Indices of top 3 min edit distance suggestions
     all_words = list(index_dict.keys())
     suggestions = (all_words[min_idxs[0]], all_words[min_idxs[1]], all_words[min_idxs[2]])
     return suggestions
 
 
 def processing_not_operator(query):
+    """Processing NOT operator"""
     temp_results = {}
     ind = 0
     i = len(query) - 1
     while i >= 0:
         if query[i] == 'not' :
-            if query[i-1] == 'not':
+            if query[i-1] == 'not': # if double NOT remove both
                 del query[i]
                 del query[i-1]
                 i -= 1
@@ -125,7 +134,7 @@ def processing_not_operator(query):
     return query, temp_results, ind
 
 def process_MIX(query, temp_results, ind):
-    
+    """Process mix of AND OR and NOT operations"""
     comparisons = 0
     while True:
         
@@ -144,7 +153,7 @@ def process_MIX(query, temp_results, ind):
             temp_results[key] = res
             query[index] = key
             del query[index-1]
-            del query[index] # because of re arrangement
+            del query[index] 
             # print(query)
             
         else :
@@ -172,13 +181,14 @@ def process_MIX(query, temp_results, ind):
  
 
 def all_and_operators(query):
+    """Check if query contains all AND operators"""
     ans = True
     if 'or' in query :
         ans = False
     return ans
             
 def find_minimum(lists):
-    
+    """Find minimum length of 2 posting lists"""
     dummy = lists.copy()
     pos1 = lists.index(min(lists))
     del dummy[pos1]
@@ -188,6 +198,7 @@ def find_minimum(lists):
     return pos1,pos2
 
 def optimised_AND(query, temp_results, ind):
+    """Optimized AND operator if query contains only multiple AND operators between them"""
     results = []
     comparisons = 0
     if len(query) == 0 :
@@ -224,7 +235,7 @@ def optimised_AND(query, temp_results, ind):
     return results,comparisons
     
 def process_query(query):
-    
+    """Processing query"""
     temp_results = {}
     results = []
     query = process_words(query)
@@ -238,6 +249,7 @@ def process_query(query):
         
     return results
 def print_results(results):
+    """Print results of query"""
     docs = len(results)
     print("###############################################")
     print('Total Documents Retrieved are : {}\n'.format(docs))
@@ -251,29 +263,29 @@ def print_results(results):
         files.append(file_mapper[id])
     return files   
 
-# class TermNotFoundError(Exception):
-#     def __init__(self, term):
-#         self.term = term
-#         self.message = ""
-    
+index_dict = {}
+file_mapper = {}
 
+def main():
+    global index_dict
+    global file_mapper
+    with open("inverted_index.pkl", "rb") as p:
+        index_dict = pickle.load(p)
+    p.close()
 
-with open("inverted_index.pkl", "rb") as p:
-    index_dict = pickle.load(p)
-p.close()
+    with open("file_mapper.pkl", "rb") as fm:
+        file_mapper = pickle.load(fm)
+    fm.close()
 
-with open("file_mapper.pkl", "rb") as fm:
-    file_mapper = pickle.load(fm)
-fm.close()
+    query = input("Enter the query to be found\n")
+    query_start_time = time()
+    query = query.split()
+    results = process_query(query)
+    query_end_time = time()
+    files = print_results(results)
+    if(len(files)>0):
+        print(f"Query retrieved in {query_end_time-query_start_time} seconds")
+    print("###############################################")
 
-query = input("Enter the query to be found\n")
-query_start_time = time()
-query = query.split()
-results = process_query(query)
-query_end_time = time()
-files = print_results(results)
-if(len(files)>0):
-    print(f"Query retrieved in {query_end_time-query_start_time} seconds")
-print("###############################################")
-
-
+if __name__ == "__main__":
+    main()

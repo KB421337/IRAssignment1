@@ -58,7 +58,7 @@ def main():
             file_mapper[doc_ID] = file_path
             index_dict = process_text(lines, index_dict,doc_ID)
             doc_ID += 1
-
+    preprocess_end = time()
     with open("InvertedIndex.txt", "w") as file:
         for key in sorted(index_dict):
             file.write(key)
@@ -70,6 +70,8 @@ def main():
         print("Created Inverted Index")
         file.close()
     
+    inv_index_end = time()
+
     def rotate(str, n):
         return str[n:] + str[:n]
 
@@ -85,7 +87,9 @@ def main():
                 perm.write("\n")
     perm.close()
 
-    print("Created Permuterm Index")
+    print("Created Permuterm Index\n")
+    # print(f"Preprocessing time = {preprocess_end-preprocess_start}s")
+    print(f"Time to build inverted index = {inv_index_end-preprocess_start} s\n")
     print("###############################################\n")
 
     with open("inverted_index.pkl", "wb") as p:

@@ -26,7 +26,7 @@ def remove_metadata(lines):
 def process_words(words):
     """
     Process each individual word. Removes extra characters and convert words to lowercase. 
-    Uses lemmatization and does not add to inverted index if result is a stopword
+    Uses lemmatization and does not add to inverted index if result is a stopword.
     """
     mod_words = []
     symbols = [ "'",'/','.','-','!','@','#','$','^','&','*','(',')','+']
